@@ -1,0 +1,123 @@
+---
+title: "Teste ANOVA"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+---
+
+# 1, INTRODUÇÃO
+
+1. Nesse estudo, usando o RStudio, vamos analisar um arquivo que armazena a média mensal de vendas de consultores de vendas de uma empresa fictícia
+
+2. O arquivo VEANDAS_MEDIA_MES.csv possui dados de vendas médias mensais de 150 consultores de vendas, que pertencem à três organizações de vendas
+3. Os produtos vendidos pelos vendedores nos três departamentos são exatamente os mesmos.
+4. O que difere é o segmento de mercado específico para o qual cada departamento é focado
+5. Os vendedores com menos de 6 meses( inclusive ), são considerados novatos
+6. Os demais, veteranos
+7. O objetivo é determinar se existe diferença entre veteranos e novatos, no nível geral de vendas, entre departamentos e também comparar a performance dos três departamentos
+
+# 2. Carregando as livrarias e pacotes
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+library(ggpubr)
+library(tidyverse)
+library(broom)
+library(AICcmodavg)
+library(lemon)
+library(knitr)
+```
+
+```{r}
+knit_print.data.frame <- lemon_print
+```
+
+# 3. Estabelecendo o Ambiente do programa 
+```{r message=FALSE, warning=FALSE}
+
+env<- "C:/data/rstudio_examples/anova"
+file <- 'VENDA_MEDIA_MES.csv'
+setwd(env)
+getwd()
+df<- read.csv2(file = file,header=TRUE, sep=';', dec=',' )
+#View(df)
+```
+## 2.1. Criando uma coluna para dizer se o vendedor é veterano ou novato
+
+```{r message=FALSE, warning=FALSE, results='asis',layout='l-body-outset'}
+df['SENIORIDADE'] <- ifelse(df['tempo_funcao']>6,'VETERANO','NOVATO' )
+
+writeLines("td, th { padding : 6px } th { background-color : brown ; color : white; border : 1px solid white; } td { color : brown ; border : 1px solid brown }")
+
+kable(df)
+```
+# 3. Análise preliminr dos dados
+
+```{r}
+summary(df)
+```
+## 3.1. Transformando variávies em fatores
+
+```{r}
+df$canal_id <- as.factor( df$canal_id)
+
+df$SENIORIDADE <- as.factor(df$SENIORIDADE)
+```
+
+
+
+# 4. Análise ANOVA dos Grupos de Vendas: canal1, canal2, canal3
+Para esse teste, vamos usar o ONE-WAY-ANOVA. 
+
+## 4.1. Desenhando o gráfico de Box Plot
+
+Antes de iniciar a análise ANOVA, propriamente dita, vamos imprimir um gáfidco de box-plot onde a varíavel categórica é canal_id. 
+
+```{r}
+ggplot(data=df,aes(x=as.factor(canal_id) , y=venda_media_mes ))+ geom_boxplot(fill='slateblue', alpha=0.2)+ xlab('CANAL DE VENDAS')
+```
+O gráfico, aparentemente, mostra que não há muita diferença na média de vendas entre canais; além disso, parece haver uma variação maior nas vendas do canal 1.
+
+# 4.2. ONE WAY ANOVA
+
+```{r}
+one.way <- aov(  venda_media_mes ~ canal_id, data=df  )
+summary(one.way)
+```
+
+O valor de $Pr(>F_{critico})$ indica que não há diferença significativa entre a média de vendas mensais dos três canais, confirmando aquilo que já havíamos visto nos gráficos.
+
+Vamos analisar agora se existe diferença em função da senioridade
+
+## 4.3. Senioridade
+
+Antes, vamos novamente imprimir um novo gráfico de box plot, onde a variável categórica é a senioridade 
+
+```{r}
+ggplot(data=df,aes(x=as.factor(SENIORIDADE) , y=venda_media_mes ))+ geom_boxplot(fill='slateblue', alpha=0.2)+ xlab('SENIORIDADE')
+```
+Aqui, o gráfico parece indicar que existe uma diferença de desempenho entre veteranos( com uma média ligeiramente superior) e novatos.
+
+Vamos fazer a análise anova ONEWAY
+
+```{r}
+one.way2 <- aov(  venda_media_mes ~SENIORIDADE, data=df  )
+summary(one.way2)
+```
+O valor de p-value é de 0.224,  muito acima dos 0.05 para o nível de significância de rejeição da hipótese nula. Portanto, concluímos que as médias de vendas não parecem mudar muito quando se compara veteranos e novatos.
+
+Vamos agora, analisar os dois fatores - CANAL e Senioridade - em conjunto 
+
+```{r}
+ggplot(df, aes(x = canal_id, y =venda_media_mes , color = SENIORIDADE)) +  geom_boxplot()
+```
+Os gráficos claramente indicam que existe diferença entre veteranos e novatos nos três canais de venda, sendo que os veteranos desempenham melhor do que os novatos em todos os canais. Além disso, conforme já verificamos anteriormente, não parece haver diferença entre os veteranos nos três canais.
+
+Vamos realizar a análise anova two way
+
+```{r}
+two.way <- aov( venda_media_mes ~ canal_id + SENIORIDADE, data=df)
+summary(two.way)
+```
+
