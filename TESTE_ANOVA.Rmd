@@ -120,4 +120,30 @@ Vamos realizar a análise anova two way
 two.way <- aov( venda_media_mes ~ canal_id + SENIORIDADE, data=df)
 summary(two.way)
 ```
+# 5. Comparando desempenho de veteranos e novatos no canal 1
+
+```{r}
+df_canal1 <- df %>% filter(canal_id =='canal1')
+```
+
+```{r}
+head(df_canal1)
+```
+```{r}
+one.way3 <- aov(  venda_media_mes ~SENIORIDADE, data=df_canal1  )
+summary(one.way3)
+```
+```{r}
+df_canal2 <- df %>% filter(canal_id =='canal2')
+one.way4 <- aov(  venda_media_mes ~SENIORIDADE, data=df_canal2  )
+summary(one.way4)
+
+```
+```{r}
+df_canal3 <- df %>% filter(canal_id =='canal3')
+one.way5 <- aov(  venda_media_mes ~SENIORIDADE, data=df_canal3  )
+summary(one.way5)
+```
+Quando os canais são isolados, a análise ANOVA ONE.WAY indica que não há diferença significativa entre veteranos e novatos.
+
 
